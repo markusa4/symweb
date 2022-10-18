@@ -5,6 +5,17 @@
 </head>
 <body>
 <h2>Symmetry Playground</h2>
+
+<h3>Color Refinement</h2>
+<div id="cref1"></div>
+<div id="cref2"></div>
+
+
+<h3>Fun graphs</h2>
+
+
+
+
 <script type="module">
 
 import * as d3 from "https://cdn.skypack.dev/d3@7";
@@ -13,10 +24,15 @@ import graph1 from './4cube.bliss.json' assert {type: 'json'};
 import graph2 from './hole11.bliss.json' assert {type: 'json'};
 import graph3 from './pp-3-1.json' assert {type: 'json'};
 import graph4 from './jgraph.dimacs.json' assert {type: 'json'};
-
-console.log(miserables);
+import graph_anim1 from './rantree-10.bliss.animate.json' assert {type: 'json'};
+import graph_anim2 from './pp-3-1.animate.json' assert {type: 'json'};
 
 const div = d3.selectAll("div");
+var colorMapV;
+var colorMapVArr = {}
+var idToGroupV = {}
+var idToGroup;
+
 
 // Copyright 2021 Observable, Inc.
 // Released under the ISC license.
@@ -34,17 +50,17 @@ function ForceGraph({
   nodeStrokeWidth = 1.5, // node stroke width, in pixels
   nodeStrokeOpacity = 1, // node stroke opacity
   nodeRadius = 5, // node radius, in pixels
-  nodeStrength, // -10
+  nodeStrength,
   linkSource = ({source}) => source, // given d in links, returns a node identifier string
   linkTarget = ({target}) => target, // given d in links, returns a node identifier string
   linkStroke = "#999", // link stroke color
   linkStrokeOpacity = 0.6, // link stroke opacity
   linkStrokeWidth = 1.5, // given d in links, returns a stroke width in pixels
   linkStrokeLinecap = "round", // link stroke linecap
-  linkStrength, //  = 0.1
+  linkStrength,
   colors = d3.schemeTableau10, // an array of color strings, for the node groups
   width = 640, // outer width, in pixels
-  height = 480, // outer height, in pixels
+  height = 400, // outer height, in pixels
   invalidation // when this promise resolves, stop the simulation
 } = {}) {
   // Compute values.
@@ -154,15 +170,248 @@ function ForceGraph({
   return Object.assign(svg.node(), {scales: {color}});
 }
 
-//miserables = FileAttachment("miserables.json").json()
+// Copyright 2021 Observable, Inc.
+// Released under the ISC license.
+// https://observablehq.com/@d3/force-directed-graph
+function ForceGraphAnim({
+  nodes, // an iterable of node objects (typically [{id}, …])
+  links // an iterable of link objects (typically [{source, target}, …])
+}, name, {
+  nodeId = d => d.id, // given d in nodes, returns a unique identifier (string)
+  nodeGroup, // given d in nodes, returns an (ordinal) value for color
+  nodeGroups, // an array of ordinal values representing the node groups
+  nodeGroup1, // an array of ordinal values representing the node groups
+  nodeGroup2, // an array of ordinal values representing the node groups
+  nodeGroup3, // an array of ordinal values representing the node groups
+  nodeGroup4, // an array of ordinal values representing the node groups
+  nodeGroup5, // an array of ordinal values representing the node groups
+  nodeGroup6, // an array of ordinal values representing the node groups
+  nodeGroup7, // an array of ordinal values representing the node groups
+  nodeGroups1, // an array of ordinal values representing the node groups
+  nodeGroups2, // an array of ordinal values representing the node groups
+  nodeGroups3, // an array of ordinal values representing the node groups
+  nodeGroups4, // an array of ordinal values representing the node groups
+  nodeGroups5, // an array of ordinal values representing the node groups
+  nodeGroups6, // an array of ordinal values representing the node groups
+  nodeGroups7, // an array of ordinal values representing the node groups
+  nodeGroupsNum,
+  nodeTitle, // given d in nodes, a title string
+  nodeFill = "currentColor", // node stroke fill (if not using a group color encoding)
+  nodeStroke = "#fff", // node stroke color
+  nodeStrokeWidth = 1.5, // node stroke width, in pixels
+  nodeStrokeOpacity = 1, // node stroke opacity
+  nodeRadius = 5, // node radius, in pixels
+  nodeStrength, // -10
+  linkSource = ({source}) => source, // given d in links, returns a node identifier string
+  linkTarget = ({target}) => target, // given d in links, returns a node identifier string
+  linkStroke = "#999", // link stroke color
+  linkStrokeOpacity = 0.6, // link stroke opacity
+  linkStrokeWidth = 1.5, // given d in links, returns a stroke width in pixels
+  linkStrokeLinecap = "round", // link stroke linecap
+  linkStrength, //  = 0.1
+  colors = d3.schemeTableau10, // an array of color strings, for the node groups
+  width = 640, // outer width, in pixels
+  height = 480, // outer height, in pixels
+  invalidation // when this promise resolves, stop the simulation
+} = {}) {
+  // Compute values.
+  const N = d3.map(nodes, nodeId).map(intern);
+  const LS = d3.map(links, linkSource).map(intern);
+  const LT = d3.map(links, linkTarget).map(intern);
+  if (nodeTitle === undefined) nodeTitle = (_, i) => N[i];
+  const T = nodeTitle == null ? null : d3.map(nodes, nodeTitle);
+  const G = nodeGroup == null ? null : d3.map(nodes, nodeGroup).map(intern);
+  const G1 = nodeGroup1 == null ? null : d3.map(nodes, nodeGroup1).map(intern);
+  const G2 = nodeGroup2 == null ? null : d3.map(nodes, nodeGroup2).map(intern);
+  const G3 = nodeGroup3 == null ? null : d3.map(nodes, nodeGroup3).map(intern);
+  const G4 = nodeGroup4 == null ? null : d3.map(nodes, nodeGroup4).map(intern);
+  const G5 = nodeGroup5 == null ? null : d3.map(nodes, nodeGroup5).map(intern);
+  const G6 = nodeGroup6 == null ? null : d3.map(nodes, nodeGroup6).map(intern);
+  const G7 = nodeGroup7 == null ? null : d3.map(nodes, nodeGroup7).map(intern);
+  const W = typeof linkStrokeWidth !== "function" ? null : d3.map(links, linkStrokeWidth);
+  const L = typeof linkStroke !== "function" ? null : d3.map(links, linkStroke);
+
+  // Replace the input nodes and links with mutable objects for the simulation.
+  nodes = d3.map(nodes, (_, i) => ({id: N[i]}));
+  links = d3.map(links, (_, i) => ({source: LS[i], target: LT[i]}));
+
+  // Compute default domains.
+  if (G && nodeGroups === undefined) nodeGroups = d3.sort(G);
+  // Construct the scales.
+  const color = nodeGroup == null ? null : d3.scaleOrdinal(nodeGroups, colors);
+  // Compute default domains.
+  if (G1 && nodeGroups1 === undefined) nodeGroups1 = d3.sort(G1);
+  // Construct the scales.
+  const color1 = nodeGroup1 == null ? null : d3.scaleOrdinal(nodeGroups1, colors);
+  // Compute default domains.
+  if (G2 && nodeGroups2 === undefined) nodeGroups2 = d3.sort(G2);
+  // Construct the scales.
+  const color2 = nodeGroup2 == null ? null : d3.scaleOrdinal(nodeGroups2, colors);
+  // Compute default domains.
+  if (G3 && nodeGroups3 === undefined) nodeGroups3 = d3.sort(G3);
+  // Construct the scales.
+  const color3 = nodeGroup3 == null ? null : d3.scaleOrdinal(nodeGroups3, colors);
+  // Compute default domains.
+  if (G4 && nodeGroups4 === undefined) nodeGroups4 = d3.sort(G4);
+  // Construct the scales.
+  const color4 = nodeGroup4 == null ? null : d3.scaleOrdinal(nodeGroups4, colors);
+  // Compute default domains.
+  if (G5 && nodeGroups5 === undefined) nodeGroups5 = d3.sort(G5);
+  // Construct the scales.
+  const color5 = nodeGroup5 == null ? null : d3.scaleOrdinal(nodeGroups5, colors);
+  
+  colorMapVArr[name] = new Array(0);
+  idToGroupV[name]   = new Array(0);
+  
+  
+  colorMapVArr[name].push(color);
+  colorMapVArr[name].push(color1);
+  colorMapVArr[name].push(color2);
+  colorMapVArr[name].push(color3); 
+  colorMapVArr[name].push(color4);
+  colorMapVArr[name].push(color5);
+  
+  idToGroupV[name].push(G)
+  idToGroupV[name].push(G1)
+  idToGroupV[name].push(G2)
+  idToGroupV[name].push(G3)
+  idToGroupV[name].push(G4)
+  idToGroupV[name].push(G5)
+  
+  colorMapV = color;
+  idToGroup = G;
+
+  // Construct the forces.
+  const forceNode = d3.forceManyBody();
+  const forceLink = d3.forceLink(links).id(({index: i}) => N[i]);
+  if (nodeStrength !== undefined) forceNode.strength(nodeStrength);
+  if (linkStrength !== undefined) forceLink.strength(linkStrength);
+
+  const simulation = d3.forceSimulation(nodes)
+      .force("link", forceLink)
+      .force("charge", forceNode)
+      .force("center",  d3.forceCenter())
+      .on("tick", ticked);
+
+  const svg = d3.create("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("viewBox", [-width / 2, -height / 2, width, height])
+      .attr("style", "max-width: 100%; height: auto; height: intrinsic;");
+
+  const link = svg.append("g")
+      .attr("stroke", typeof linkStroke !== "function" ? linkStroke : null)
+      .attr("stroke-opacity", linkStrokeOpacity)
+      .attr("stroke-width", typeof linkStrokeWidth !== "function" ? linkStrokeWidth : null)
+      .attr("stroke-linecap", linkStrokeLinecap)
+    .selectAll("line")
+    .data(links)
+    .join("line");
+
+  const node = svg.append("g")
+      .attr("class", "nodes"+name)
+      .attr("fill", nodeFill)
+      .attr("group", nodeGroups)
+      .attr("stroke", nodeStroke)
+      .attr("stroke-opacity", nodeStrokeOpacity)
+      .attr("stroke-width", nodeStrokeWidth)
+    .selectAll("circle")
+    .data(nodes)
+    .join("circle")
+      .attr("r", nodeRadius)
+      .call(drag(simulation));
+      
+  if (W) link.attr("stroke-width", ({index: i}) => W[i]);
+  if (L) link.attr("stroke", ({index: i}) => L[i]);
+  if (G) node.attr("fill", ({index: i}) => color(G[i]));
+  if (T) node.append("title").text(({index: i}) => T[i]);
+  if (invalidation != null) invalidation.then(() => simulation.stop());
+
+  function intern(value) {
+    return value !== null && typeof value === "object" ? value.valueOf() : value;
+  }
+
+  function ticked() {
+    link
+      .attr("x1", d => d.source.x)
+      .attr("y1", d => d.source.y)
+      .attr("x2", d => d.target.x)
+      .attr("y2", d => d.target.y);
+
+    node
+      .attr("cx", d => d.x)
+      .attr("cy", d => d.y);
+  }
+
+  function drag(simulation) {    
+    function dragstarted(event) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      event.subject.fx = event.subject.x;
+      event.subject.fy = event.subject.y;
+    }
+    
+    function dragged(event) {
+      event.subject.fx = event.x;
+      event.subject.fy = event.y;
+    }
+    
+    function dragended(event) {
+      if (!event.active) simulation.alphaTarget(0);
+      event.subject.fx = null;
+      event.subject.fy = null;
+    }
+    
+    return d3.drag()
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended);
+  }
+
+  return Object.assign(svg.node(), {scales: {color}});
+}
+
+
+document.getElementById("cref1").appendChild(ForceGraphAnim(graph_anim1, "ganim1", {
+  nodeId: d => d.id,
+  nodeGroup: d => d.color0,
+  nodeGroup1: d => d.color1,
+  nodeGroup2: d => d.color2,
+  nodeGroup3: d => d.color3,
+  nodeGroup4: d => d.color4,
+  
+  nodeTitle: d => `${d.id}\n${d.color}`,
+  linkStrokeWidth: l => Math.sqrt(l.value+1),
+  width: 640,
+  height: 480,
+  //linkStrength: 0.5,
+  //nodeStrength: -5
+}));
+
+document.getElementById("cref1").appendChild(ForceGraphAnim(graph_anim2, "ganim2", {
+  nodeId: d => d.id,
+  nodeGroup: d => d.color0,
+  nodeGroup1: d => d.color1,
+  nodeGroup2: d => d.color2,
+  nodeGroup3: d => d.color3,
+  nodeGroup4: d => d.color4,
+  
+  nodeTitle: d => `${d.id}\n${d.color}`,
+  linkStrokeWidth: l => Math.sqrt(l.value+1),
+  width: 640,
+  height: 480,
+  //linkStrength: 0.5,
+  //nodeStrength: -5
+}));
+
 document.body.appendChild(ForceGraph(graph1, {
   nodeId: d => d.id,
   nodeGroup: d => d.color,
   nodeTitle: d => `${d.id}\n${d.color}`,
   linkStrokeWidth: l => Math.sqrt(l.value+1),
   width: 640,
-  height: 480,
+  height: 480
 }));
+
 document.body.appendChild(ForceGraph(graph2, {
   nodeId: d => d.id,
   nodeGroup: d => d.color,
@@ -191,6 +440,24 @@ document.body.appendChild(ForceGraph(graph4, {
   linkStrength: 0.1,
   nodeStrength: -20
 }));
+
+
+console.log(colorMapVArr);
+console.log(idToGroupV);
+
+function animate_itnum(name, curit, maxit) {
+d3.select(".nodes"+name)
+    .selectAll("circle")
+    .transition()
+    .duration(333)
+    .attr("fill", function(c) {
+      return colorMapVArr[name][curit](idToGroupV[name][curit][c.id]);
+    }).delay(1250).on('end', function(d,i){if (d.id == 0) animate_itnum(name, (curit + 1) % maxit, maxit)});
+}
+
+animate_itnum("ganim1", 0, 4)
+animate_itnum("ganim2", 0, 4)
+
 </script>
 
 
