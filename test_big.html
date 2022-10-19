@@ -6,32 +6,12 @@
 <body>
 <h2>Symmetry Playground</h2>
 
-<h3>Color Refinement</h2>
-<div id="cref1"></div>
-
-<h3>Symmetries</h2>
-<div id="sym1"></div>
-
-<h3>Fun graphs</h2>
-
-
 
 
 <script type="module">
 
 import * as d3 from "https://cdn.skypack.dev/d3@7";
-import miserables from './miserables.json' assert {type: 'json'};
-import graph1 from './4cube.bliss.json' assert {type: 'json'};
-//import graph2 from './hole11.bliss.json' assert {type: 'json'};
-import graph3 from './had-4.json' assert {type: 'json'};
-import graph4 from './jgraph.dimacs.json' assert {type: 'json'};
-import graph5 from './had-2.json' assert {type: 'json'};
-import graph_anim1 from './rantree-10.bliss.animate.json' assert {type: 'json'};
-import graph_anim2 from './ransq_20_a.bliss.cref.json' assert {type: 'json'};
-//import graph6 from './php12e12.json' assert {type: 'json'};
-import graph_sym1 from './4cube.bliss.sym.json' assert {type: 'json'};
-import graph_sym2 from './jgraph.dimacs.sym.json' assert {type: 'json'};
-import graph_sym3 from './ag2-3.sym.json' assert {type: 'json'};
+import graph6 from './php12e12.json' assert {type: 'json'};
 
 const div = d3.selectAll("div");
 var colorMapV;
@@ -618,130 +598,16 @@ function ForceGraphAnimSym({
   return Object.assign(svg.node(), {scales: {color}});
 }
 
-
-document.getElementById("cref1").appendChild(ForceGraphAnim(graph_anim1, "ganim1", {
-  nodeId: d => d.id,
-  nodeGroup: d => d.color0,
-  nodeGroup1: d => d.color1,
-  nodeGroup2: d => d.color2,
-  nodeGroup3: d => d.color3,
-  nodeGroup4: d => d.color4,
-  
-  nodeTitle: d => `${d.id}\n${d.color}`,
-  linkStrokeWidth: l => Math.sqrt(l.value+1),
-  width: 640,
-  height: 480,
-  //linkStrength: 0.5,
-  //nodeStrength: -5
-}));
-
-document.getElementById("cref1").appendChild(ForceGraphAnim(graph_anim2, "ganim2", {
-  nodeId: d => d.id,
-  nodeGroup: d => d.color0,
-  nodeGroup1: d => d.color1,
-  nodeGroup2: d => d.color2,
-  nodeGroup3: d => d.color3,
-  nodeGroup4: d => d.color4,
-  
-  nodeTitle: d => `${d.id}\n${d.color}`,
-  linkStrokeWidth: l => Math.sqrt(l.value+1),
-  width: 640,
-  height: 480,
-  //linkStrength: 0.5,
-  //nodeStrength: -5
-}));
-
-document.body.appendChild(ForceGraph(graph1, {
+document.body.appendChild(ForceGraph(graph6, {
   nodeId: d => d.id,
   nodeGroup: d => d.color,
   nodeTitle: d => `${d.id}\n${d.color}`,
   linkStrokeWidth: l => Math.sqrt(l.value+1),
-  width: 640,
-  height: 480
-}));
-document.body.appendChild(ForceGraph(graph5, {
-  nodeId: d => d.id,
-  nodeGroup: d => d.color,
-  nodeTitle: d => `${d.id}\n${d.color}`,
-  linkStrokeWidth: l => Math.sqrt(l.value+1),
-  width: 640,
-  height: 480,
+  width: 2048,
+  height: 2048,
   linkStrength: .5,
-  nodeStrength: -1000
+  nodeStrength: -50
 }));
-document.body.appendChild(ForceGraph(graph3, {
-  nodeId: d => d.id,
-  nodeGroup: d => d.color,
-  nodeTitle: d => `${d.id}\n${d.color}`,
-  linkStrokeWidth: l => Math.sqrt(l.value+1),
-  width: 640,
-  height: 480
-}));
-document.body.appendChild(ForceGraph(graph4, {
-  nodeId: d => d.id,
-  nodeGroup: d => d.color,
-  nodeTitle: d => `${d.id}\n${d.color}`,
-  linkStrokeWidth: l => Math.sqrt(l.value+1),
-  width: 640,
-  height: 480,
-  linkStrength: .25,
-  nodeStrength: -200
-}));
-
-document.getElementById("sym1").appendChild(ForceGraphAnimSym(graph_sym1, "animsym", {
-  nodeId: d => d.id,
-  nodeGroup: d => d.color,
-  symPartner: d => d.sympartner,
-  symPartner2: d => d.sympartner1,
-  nodeTitle: d => `${d.id}\n${d.color}`,
-  linkStrokeWidth: l => Math.sqrt(l.value+1),
-  width: 640,
-  height: 480,
-  linkStrength: .25,
-  nodeStrength: -200
-}));
-
-document.getElementById("sym1").appendChild(ForceGraphAnimSym(graph_sym2, "animsym2", {
-  nodeId: d => d.id,
-  nodeGroup: d => d.color,
-  symPartner: d => d.sympartner,
-  symPartner2: d => d.sympartner1,
-  nodeTitle: d => `${d.id}\n${d.color}`,
-  linkStrokeWidth: l => Math.sqrt(l.value+1),
-  width: 640,
-  height: 480,
-  linkStrength: .25,
-  nodeStrength: -200
-}));
-
-document.getElementById("sym1").appendChild(ForceGraphAnimSym(graph_sym3, "animsym3", {
-  nodeId: d => d.id,
-  nodeGroup: d => d.color,
-  symPartner: d => d.sympartner,
-  symPartner2: d => d.sympartner1,
-  nodeTitle: d => `${d.id}\n${d.color}`,
-  linkStrokeWidth: l => Math.sqrt(l.value+1),
-  width: 640,
-  height: 480,
-  linkStrength: .25,
-  nodeStrength: -200
-}));
-
-
-function animate_itnum(name, curit, maxit) {
-d3.select(".nodes"+name)
-    .selectAll("circle")
-    .transition()
-    .duration(333)
-    .attr("fill", function(c) {
-      return colorMapVArr[name][curit](idToGroupV[name][curit][c.id]);
-    }).delay(1250).on('end', function(d,i){if (d.id == 0) animate_itnum(name, (curit + 1) % maxit, maxit)});
-}
-
-
-
-animate_itnum("ganim1", 0, 4)
-animate_itnum("ganim2", 0, 4)
 
 </script>
 
