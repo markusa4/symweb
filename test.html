@@ -8,8 +8,9 @@
 
 <h3>Color Refinement</h2>
 <div id="cref1"></div>
-<div id="cref2"></div>
 
+<h3>Symmetries</h2>
+<div id="sym1"></div>
 
 <h3>Fun graphs</h2>
 
@@ -22,10 +23,15 @@ import * as d3 from "https://cdn.skypack.dev/d3@7";
 import miserables from './miserables.json' assert {type: 'json'};
 import graph1 from './4cube.bliss.json' assert {type: 'json'};
 import graph2 from './hole11.bliss.json' assert {type: 'json'};
-import graph3 from './pp-3-1.json' assert {type: 'json'};
+import graph3 from './had-4.json' assert {type: 'json'};
 import graph4 from './jgraph.dimacs.json' assert {type: 'json'};
+import graph5 from './had-2.json' assert {type: 'json'};
 import graph_anim1 from './rantree-10.bliss.animate.json' assert {type: 'json'};
-import graph_anim2 from './pp-3-1.animate.json' assert {type: 'json'};
+import graph_anim2 from './ransq_20_a.bliss.cref.json' assert {type: 'json'};
+import graph6 from './php12e12.json' assert {type: 'json'};
+import graph_sym1 from './4cube.bliss.sym.json' assert {type: 'json'};
+import graph_sym2 from './jgraph.dimacs.sym.json' assert {type: 'json'};
+import graph_sym3 from './ag2-3.sym.json' assert {type: 'json'};
 
 const div = d3.selectAll("div");
 var colorMapV;
@@ -370,6 +376,248 @@ function ForceGraphAnim({
   return Object.assign(svg.node(), {scales: {color}});
 }
 
+// Copyright 2021 Observable, Inc.
+// Released under the ISC license.
+// https://observablehq.com/@d3/force-directed-graph
+function ForceGraphAnimSym({
+  nodes, // an iterable of node objects (typically [{id}, …])
+  links // an iterable of link objects (typically [{source, target}, …])
+}, name, {
+  nodeId = d => d.id, // given d in nodes, returns a unique identifier (string)
+  nodeGroup, // given d in nodes, returns an (ordinal) value for color
+  nodeGroups, // an array of ordinal values representing the node groups
+  symPartner, 
+  symPartner2, 
+  nodeTitle, // given d in nodes, a title string
+  nodeFill = "currentColor", // node stroke fill (if not using a group color encoding)
+  nodeStroke = "#fff", // node stroke color
+  nodeStrokeWidth = 1.5, // node stroke width, in pixels
+  nodeStrokeOpacity = 1, // node stroke opacity
+  nodeRadius = 5, // node radius, in pixels
+  nodeStrength, // -10
+  linkSource = ({source}) => source, // given d in links, returns a node identifier string
+  linkTarget = ({target}) => target, // given d in links, returns a node identifier string
+  linkStroke = "#999", // link stroke color
+  linkStrokeOpacity = 0.6, // link stroke opacity
+  linkStrokeWidth = 1.5, // given d in links, returns a stroke width in pixels
+  linkStrokeLinecap = "round", // link stroke linecap
+  linkStrength, //  = 0.1
+  colors = d3.schemeTableau10, // an array of color strings, for the node groups
+  width = 640, // outer width, in pixels
+  height = 480, // outer height, in pixels
+  invalidation // when this promise resolves, stop the simulation
+} = {}) {
+  // Compute values.
+  const N = d3.map(nodes, nodeId).map(intern);
+  const LS = d3.map(links, linkSource).map(intern);
+  const LT = d3.map(links, linkTarget).map(intern);
+  if (nodeTitle === undefined) nodeTitle = (_, i) => N[i];
+  const T = nodeTitle == null ? null : d3.map(nodes, nodeTitle);
+  const G = nodeGroup == null ? null : d3.map(nodes, nodeGroup).map(intern);
+  const W = typeof linkStrokeWidth !== "function" ? null : d3.map(links, linkStrokeWidth);
+  const L = typeof linkStroke !== "function" ? null : d3.map(links, linkStroke);
+  
+  const symP = d3.map(nodes, symPartner);
+  const symP2 = d3.map(nodes, symPartner2);
+  
+  const saveX = Array();
+  const saveY = Array();
+
+  // Replace the input nodes and links with mutable objects for the simulation.
+  nodes = d3.map(nodes, (_, i) => ({id: N[i]}));
+  links = d3.map(links, (_, i) => ({source: LS[i], target: LT[i]}));
+
+  // Compute default domains.
+  if (G && nodeGroups === undefined) nodeGroups = d3.sort(G);
+  // Construct the scales.
+  const color = nodeGroup == null ? null : d3.scaleOrdinal(nodeGroups, colors);
+
+  // Construct the forces.
+  const forceNode = d3.forceManyBody();
+  const forceLink = d3.forceLink(links).id(({index: i}) => N[i]);
+  
+  if (nodeStrength !== undefined) forceNode.strength(nodeStrength);
+  if (linkStrength !== undefined) forceLink.strength(linkStrength);
+  
+  const simulation = d3.forceSimulation(nodes)
+      .force("link", forceLink)
+      .force("charge", forceNode)
+      .force("center",  d3.forceCenter())
+      .on("tick", ticked);
+
+  const svg = d3.create("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("viewBox", [-width / 2, -height / 2, width, height])
+      .attr("style", "max-width: 100%; height: auto; height: intrinsic;");
+
+  const link = svg.append("g")
+      .attr("class", "links"+name)
+      .attr("stroke", typeof linkStroke !== "function" ? linkStroke : null)
+      .attr("stroke-opacity", linkStrokeOpacity)
+      .attr("stroke-width", typeof linkStrokeWidth !== "function" ? linkStrokeWidth : null)
+      .attr("stroke-linecap", linkStrokeLinecap)
+    .selectAll("line")
+    .data(links)
+    .join("line");
+  
+  const node = svg.append("g")
+      .attr("class", "nodes"+name)
+      .attr("fill", nodeFill)
+      .attr("group", nodeGroups)
+      .attr("stroke", nodeStroke)
+      .attr("stroke-opacity", nodeStrokeOpacity)
+      .attr("stroke-width", nodeStrokeWidth)
+    .selectAll("circle")
+    .data(nodes)
+    .join("circle")
+      .attr("r", nodeRadius);
+      
+  if (W) link.attr("stroke-width", ({index: i}) => W[i]);
+  if (L) link.attr("stroke", ({index: i}) => L[i]);
+  if (G) node.attr("fill", ({index: i}) => color(G[i]));
+  if (T) node.append("title").text(({index: i}) => T[i]);
+  node.append("symPartner").text(({index: i}) => symPartner[i]);
+  if (invalidation != null) invalidation.then(() => {simulation.stop(); console.log("yes"); simulation_done();});
+  
+  const simulationDurationInMs = 1000;
+  let set_start = 0;
+  let startTime;
+  let endTime;
+
+  function intern(value) {
+    return value !== null && typeof value === "object" ? value.valueOf() : value;
+  }
+
+
+  function updatePos() {
+    link
+      .attr("x1", d => d.source.x)
+      .attr("y1", d => d.source.y)
+      .attr("x2", d => d.target.x)
+      .attr("y2", d => d.target.y);
+
+    node
+      .attr('cx', function(d){return d.x})
+      .attr('cy', function(d){return d.y});
+  }
+  
+  function ticked() {
+    if(set_start == 0) {
+    	startTime = Date.now();
+  	endTime = startTime + simulationDurationInMs;
+    	set_start = 1;
+    }
+    
+    if (Date.now() >= endTime) {
+    	simulation.stop();
+    	console.log("yes"); 
+    	console.log(nodes)
+    	console.log(symP)
+    	nodes.forEach(function(node, index) {
+	  node.savedX = node.x;
+	  node.savedY = node.y;
+	  node.partnerX = nodes[symP[node.id]].x;
+	  node.partnerY = nodes[symP[node.id]].y;
+	  node.partner2X = nodes[symP2[node.id]].x;
+	  node.partner2Y = nodes[symP2[node.id]].y;
+	});
+	console.log(nodes)
+	
+	animFlip();
+    }
+    
+    updatePos();
+  }
+  
+  function animFlip() {
+  	d3.select(".links"+name)
+	    .selectAll("line")
+	    .transition()
+	    .duration(500)
+	    .attr("x1", function(l) {
+	      return l.source.partnerX;
+	    })
+	    .attr("y1", function(l) {
+	      return l.source.partnerY;
+	    }).attr("x2", function(l) {
+	      return l.target.partnerX;
+	    })
+	    .attr("y2", function(l) {
+	      return l.target.partnerY;
+	    }).delay(750);
+  	d3.select(".nodes"+name)
+	    .selectAll("circle")
+	    .transition()
+	    .duration(500)
+	    .attr("cx", function(c) {
+	      return c.partnerX;
+	    })
+	    .attr("cy", function(c) {
+	      return c.partnerY;
+	    }).delay(750).on('end', animFlip2);
+  }
+  
+  function animFlip2() {
+  	d3.select(".links"+name)
+	    .selectAll("line")
+	    .transition()
+	    .duration(500)
+	    .attr("x1", function(l) {
+	      return l.source.partner2X;
+	    })
+	    .attr("y1", function(l) {
+	      return l.source.partner2Y;
+	    }).attr("x2", function(l) {
+	      return l.target.partner2X;
+	    })
+	    .attr("y2", function(l) {
+	      return l.target.partner2Y;
+	    }).delay(750);
+  	d3.select(".nodes"+name)
+	    .selectAll("circle")
+	    .transition()
+	    .duration(500)
+	    .attr("cx", function(c) {
+	      return c.partner2X;
+	    })
+	    .attr("cy", function(c) {
+	      return c.partner2Y;
+	    }).delay(750).on('end', animFlipBack);
+  }
+  
+  function animFlipBack() {
+  	d3.select(".nodes"+name)
+	    .selectAll("circle")
+	    .transition()
+	    .duration(500)
+	    .attr("cx", function(c) {
+	      return c.savedX;
+	    })
+	    .attr("cy", function(c) {
+	      return c.savedY;
+	    }).delay(750).on('end', animFlip);;
+    
+	  d3.select(".links"+name)
+	    .selectAll("line")
+	    .transition()
+	    .duration(500)
+	    .attr("x1", function(l) {
+	      return l.source.savedX;
+	    })
+	    .attr("y1", function(l) {
+	      return l.source.savedY;
+	    }).attr("x2", function(l) {
+	      return l.target.savedX;
+	    })
+	    .attr("y2", function(l) {
+	      return l.target.savedY;
+	    }).delay(750);
+  }
+
+  return Object.assign(svg.node(), {scales: {color}});
+}
+
 
 document.getElementById("cref1").appendChild(ForceGraphAnim(graph_anim1, "ganim1", {
   nodeId: d => d.id,
@@ -422,6 +670,16 @@ document.body.appendChild(ForceGraph(graph2, {
   linkStrength: 0.5,
   nodeStrength: -5
 }));
+document.body.appendChild(ForceGraph(graph5, {
+  nodeId: d => d.id,
+  nodeGroup: d => d.color,
+  nodeTitle: d => `${d.id}\n${d.color}`,
+  linkStrokeWidth: l => Math.sqrt(l.value+1),
+  width: 640,
+  height: 480,
+  linkStrength: .5,
+  nodeStrength: -1000
+}));
 document.body.appendChild(ForceGraph(graph3, {
   nodeId: d => d.id,
   nodeGroup: d => d.color,
@@ -437,13 +695,49 @@ document.body.appendChild(ForceGraph(graph4, {
   linkStrokeWidth: l => Math.sqrt(l.value+1),
   width: 640,
   height: 480,
-  linkStrength: 0.1,
-  nodeStrength: -20
+  linkStrength: .25,
+  nodeStrength: -200
 }));
 
+document.getElementById("sym1").appendChild(ForceGraphAnimSym(graph_sym1, "animsym", {
+  nodeId: d => d.id,
+  nodeGroup: d => d.color,
+  symPartner: d => d.sympartner,
+  symPartner2: d => d.sympartner1,
+  nodeTitle: d => `${d.id}\n${d.color}`,
+  linkStrokeWidth: l => Math.sqrt(l.value+1),
+  width: 640,
+  height: 480,
+  linkStrength: .25,
+  nodeStrength: -200
+}));
 
-console.log(colorMapVArr);
-console.log(idToGroupV);
+document.getElementById("sym1").appendChild(ForceGraphAnimSym(graph_sym2, "animsym2", {
+  nodeId: d => d.id,
+  nodeGroup: d => d.color,
+  symPartner: d => d.sympartner,
+  symPartner2: d => d.sympartner1,
+  nodeTitle: d => `${d.id}\n${d.color}`,
+  linkStrokeWidth: l => Math.sqrt(l.value+1),
+  width: 640,
+  height: 480,
+  linkStrength: .25,
+  nodeStrength: -200
+}));
+
+document.getElementById("sym1").appendChild(ForceGraphAnimSym(graph_sym3, "animsym3", {
+  nodeId: d => d.id,
+  nodeGroup: d => d.color,
+  symPartner: d => d.sympartner,
+  symPartner2: d => d.sympartner1,
+  nodeTitle: d => `${d.id}\n${d.color}`,
+  linkStrokeWidth: l => Math.sqrt(l.value+1),
+  width: 640,
+  height: 480,
+  linkStrength: .25,
+  nodeStrength: -200
+}));
+
 
 function animate_itnum(name, curit, maxit) {
 d3.select(".nodes"+name)
@@ -454,6 +748,8 @@ d3.select(".nodes"+name)
       return colorMapVArr[name][curit](idToGroupV[name][curit][c.id]);
     }).delay(1250).on('end', function(d,i){if (d.id == 0) animate_itnum(name, (curit + 1) % maxit, maxit)});
 }
+
+
 
 animate_itnum("ganim1", 0, 4)
 animate_itnum("ganim2", 0, 4)
