@@ -25,7 +25,7 @@
   
   <main class="container" id="docs" style="margin-top:0;padding-top:0;">
     <div class="row">
-      <div class="col-xs-3 col-sm-3 col-md-2 col-lg-2">
+      <div class="hidden-xs hidden-sm col-md-2 col-lg-2">
         <div class="box">
       <aside style="margin-top:0;padding-top:64px;">
   <nav class="closed-on-mobile">
@@ -48,11 +48,11 @@
 </aside>
 </div>
 </div>
-<div class="col-xs-9 col-sm-9 col-md-10 col-lg-10">
+<div class="col-xs-12 col-sm-12 col-md-10 col-lg-10">
   <div class="box">
   <article style="margin-top:0;">
     <h4>State-of-the-art Symmetry Detection</h4>
-    <p>dejavu is a software library for the detection of combinatorial symmetry. The library is freely available on GitHub under the MIT license.</p>
+    <p>dejavu is a software library for the detection of combinatorial symmetry. It features competitive sequential, parallel, randomized and deterministic symmetry detection. The library is freely available on GitHub under the MIT license.</p>
   <a href="#" role="button" class="contrast">Download</a>
   <a href="#" role="button" class="contrast">GitHub Project</a>
   <a href="#" role="button" class="secondary">Getting started</a>
@@ -76,22 +76,22 @@
     </article>
  <article>
 <h4>How does it work?</h4>
-<p>One major component of the design is the so-called <b>color refinement algorithm</b>. Color refinement is a powerful heuristic for symmetry detection. It is continuously and repeatedly applied in all state-of-the-art solvers.</p>
-
+<p>Practical graph isomorphism algorithms have been developed for other 50 years. There are many different strategies, heuristics and implementation tricks which have evolved over time.</p>
+<p>One major component of the design is the so-called <b>color refinement algorithm</b> (AKA 1-dimensional Weisfeiler-Leman). Color refinement is a powerful heuristic for symmetry detection. It is continuously and repeatedly applied in all state-of-the-art solvers.</p>
+<p>All vertices start with the same color. In each iteration, if, say, two blue nodes have a different number of red nodes, they are colored differently. Since all vertices start with the same color, in the first iteration, vertices get colored according to their degree, in the second iteration according to their neighbours' degrees, and so forth. The process is continued until no further splits can be made.</p>
 <div id="cref" style="text-align:center" class="row">
   <div id="cref1x" style="text-align:center" class="col-xs-6 col-sm-6 col-md-6 col-lg-6"><div class="box"><div id="cref1"></div><hr><small><span id="cref1text">Iteration 0</span></small></span></div></div>
   <div id="cref2x" style="text-align:center" class="col-xs-6 col-sm-6 col-md-6 col-lg-6"><div class="box"><div id="cref2"></div><hr><small><span id="cref2text">Iteration 0</span></small></span></div></div>
 </div>
-
-<p>To find out more about how symmetry detection is actually performed, you can read the descriptions on this page or check out relevant publications where the underlying algorithms and theory is described in even more detail.</p>
+<p>Crucially, whenever vertices end up with different colors, there can be no symmetry mapping these two vertices onto each other.</p>
+<p>Want to learn more about how symmetry detection is actually performed? You can read the descriptions on this page or check out relevant publications where the underlying algorithms and theory are described in even more detail.</p>
 <a href="#" role="button" class="contrast">How it works</a>
 <a href="#" role="button" class="secondary">Publications</a>
 </article>
 
 <article>
-  <h4>So, how fast is it?</h4>
-  <div id="crefx" style="text-align:center"></div>
-  
+  <h4>How fast is it?</h4>
+  <p>We test solvers on a large number of different graph classes from both combinatorics and practical applications. You can find recent benchmark numbers comparing different configurations of dejavu to other state-of-the-art solvers in our benchmark section.</p>
   <a href="#" role="button" class="contrast">Benchmarks</a>
 </article>
 </div>
